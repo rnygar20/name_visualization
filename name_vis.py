@@ -6,9 +6,9 @@ from dash import html
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash.dependencies import Input, Output
+from dash.exceptions import PreventUpdate
 
 df = pd.read_csv('babynames1880-2020.csv')
-#df = df.head(200)
 alphabet_string = string.ascii_uppercase
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -79,17 +79,55 @@ def update_name_graph(gender, letter, y_max, y_min, r_max, r_min):
                 filtered_df = dff[dff['Name'].str.get(0) == letter[i]]
                 new_df = new_df.append(filtered_df, ignore_index=True)
             dff = new_df
-            print(dff)
         elif len(letter) == 1:
             dff = dff[dff['Name'].str.get(0) == letter[0]]
 
     dff = dff[['Name', 'Births']]
+    dff = dff.groupby(by=['Name']).sum()
+    dff.reset_index(level=0, inplace=True)
     dff = dff.sort_values(by='Births', ascending=False)
 
-    dff = dff.head(100)
-    fig = px.scatter(dff, x="Name", y="Births")
+    dff = dff.head(20)
+    fig = px.histogram(dff, x="Births", y="Name").update_yaxes(categoryorder='total ascending')
     return fig
 
+
+@app.callback(
+    Output(component_id='rank_time', component_property='figure'),
+    Input(component_id='top_20', component_property='clickData'),
+    Input(component_id='radio_gender', component_property='value'),
+    prevent_initial_call=True
+)
+def update_name_graph(selected_name, gender):
+    if selected_name is None:
+        raise PreventUpdate
+
+    name = selected_name['points'][0]['y']
+    dff = df
+    dff = dff[dff['Name'] == name]
+    dff = dff[dff['Gender'] == gender]
+    fig = px.scatter(dff, x='Year', y='Rank')
+    fig['layout']['yaxis']['autorange'] = "reversed"
+    return fig
+
+
+@app.callback(
+    Output(component_id='birth_time', component_property='figure'),
+    Input(component_id='top_20', component_property='clickData'),
+    Input(component_id='radio_gender', component_property='value'),
+    prevent_initial_call=True
+)
+def update_name_graph(selected_name, gender):
+    if selected_name is None:
+        raise PreventUpdate
+
+    name = selected_name['points'][0]['y']
+    dff = df
+    dff = dff[dff['Name'] == name]
+    dff = dff[dff['Gender'] == gender]
+    fig = px.line(dff, x='Year', y='Births')
+    #fig['layout']['yaxis']['autorange'] = "reversed"
+    return fig
 
 if __name__ == '__main__':
     app.run_server(debug=True)
