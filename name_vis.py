@@ -74,18 +74,19 @@ def update_name_graph(gender, letter, y_max, y_min, r_max, r_min):
 
     if letter is not None:
         if len(letter) > 1:
-            new_df = []
-            for i in range(len(letter)):
-                dff = dff[dff['Name'].str.get(0) == letter[i]]
-                new_df.append(dff)
-                print(new_df)
+            new_df = dff[dff['Name'].str.get(0) == letter[0]]
+            for i in range(1, len(letter)):
+                filtered_df = dff[dff['Name'].str.get(0) == letter[i]]
+                new_df = new_df.append(filtered_df, ignore_index=True)
             dff = new_df
+            print(dff)
         elif len(letter) == 1:
             dff = dff[dff['Name'].str.get(0) == letter[0]]
 
-    dff.sort_values(by='Births', ascending=False)
+    dff = dff[['Name', 'Births']]
+    dff = dff.sort_values(by='Births', ascending=False)
 
-    dff = dff.head(20)
+    dff = dff.head(100)
     fig = px.scatter(dff, x="Name", y="Births")
     return fig
 
