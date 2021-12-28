@@ -17,8 +17,11 @@ app.layout = html.Div(children=[
     html.H1(children='A web application to look up baby names 1880-2020',
             style={'width': '100%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center'}
             ),
+    dbc.Row(html.Div([], style={'padding': 40})),
     dbc.Row([
         dbc.Col(html.Div(children=[
+            html.H3("Filtering of top 20"),
+            dbc.Row(html.Div([], style={'padding': 10})),
             html.H6("Select gender:"),
             dcc.RadioItems(id='radio_gender',
                            options=[{'label': 'Male', 'value': 'M'},
@@ -45,15 +48,40 @@ app.layout = html.Div(children=[
                 {'value': x, 'label': x} for x in range(1, 1001)
             ], value=1000)
         ]), width=3),
-        dbc.Col([
+        dbc.Col(html.Div(children=[
+            html.H3("Total births top 20", style={'textAlign': 'center'}),
             dcc.Graph(id='top_20')
-        ], width=9)
+        ], style={'margin-left': 100}), width=9)
     ]),
+    dbc.Row([html.Div([
+        html.H3("Click on a bar in the top 20 to show graphs below:", style={'textAlign': 'center'})
+    ])]),
     dbc.Row([
-        dbc.Col([html.H3("Rank over time:"), dcc.Graph(id='rank_time')], width=6),
-        dbc.Col([html.H3("Births over time:"), dcc.Graph(id='birth_time')], width=6)
+        dbc.Col([html.H3("Rank over time", style={'textAlign': 'center', 'padding': 10}), dcc.Graph(id='rank_time')], width=6),
+        dbc.Col([html.H3("Births over time", style={'textAlign': 'center', 'padding': 10}), dcc.Graph(id='birth_time')], width=6)
+    ]),
+    # dbc.Row([
+    #     dbc.Col([html.H3("Correlation of births and rank 1880-2020", style={'textAlign': 'center', 'padding': 10}),
+    #              dcc.Graph(id='all_births', figure=px.scatter(df, x='Rank', y='Births'))],
+    #             width=12),
+    # ])
+    # dbc.Row([
+    #     dbc.Col([html.H3("Histogram with sum of births in 1880-2020", style={'textAlign': 'center', 'padding': 10}),
+    #              dcc.Graph(id='all_births', figure=px.histogram(df, x='Year', y='Births'))],
+    #             width=10),
+    # ])
+    # dbc.Row([
+    #     dbc.Col([html.H3("Sum of births each gender 1880-2020", style={'textAlign': 'center', 'padding': 10}),
+    #              dcc.Graph(id='all_births', figure=px.histogram(df, x='Gender', y='Births', color='Gender'))],
+    #             width=10),
+    # ])
+    dbc.Row([
+        dbc.Col([html.H3("Sum of births each gender 1880-2020", style={'textAlign': 'center', 'padding': 10}),
+                 dcc.Graph(id='all_births', figure=px.histogram(df, x='Year', y='Rank'))],
+                width=10),
     ])
 ])
+
 
 @app.callback(
     Output(component_id='top_20', component_property='figure'),
@@ -106,7 +134,7 @@ def update_name_graph(selected_name, gender):
     dff = df
     dff = dff[dff['Name'] == name]
     dff = dff[dff['Gender'] == gender]
-    fig = px.scatter(dff, x='Year', y='Rank')
+    fig = px.line(dff, x='Year', y='Rank')
     fig['layout']['yaxis']['autorange'] = "reversed"
     return fig
 
@@ -126,8 +154,9 @@ def update_name_graph(selected_name, gender):
     dff = dff[dff['Name'] == name]
     dff = dff[dff['Gender'] == gender]
     fig = px.line(dff, x='Year', y='Births')
-    #fig['layout']['yaxis']['autorange'] = "reversed"
+    # fig['layout']['yaxis']['autorange'] = "reversed"
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
